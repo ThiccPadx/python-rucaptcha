@@ -1,16 +1,17 @@
-from python_rucaptcha.core.base import BaseCaptcha
-from python_rucaptcha.core.enums import AmazonWAFCaptchaEnm
+from typing import Union
+
+from .core.base import BaseCaptcha
+from .core.enums import AmazonWAFCaptchaEnm
 
 
 class AmazonWAF(BaseCaptcha):
     def __init__(
         self,
-        rucaptcha_key: str,
-        pageurl: str,
-        sitekey: str,
+        websiteURL: str,
+        websiteKey: str,
         iv: str,
         context: str,
-        method: str = AmazonWAFCaptchaEnm.AMAZON_WAF.value,
+        method: Union[str, AmazonWAFCaptchaEnm] = AmazonWAFCaptchaEnm.AmazonTaskProxyless,
         *args,
         **kwargs,
     ):
@@ -19,64 +20,80 @@ class AmazonWAF(BaseCaptcha):
 
         Args:
             rucaptcha_key: User API key
-            pageurl: Full URL of the captcha page
-            sitekey: Key value from the page
+            websiteURL: Full URL of the captcha page
+            websiteKey: Key value from the page
             iv: Value iv from the page
             context: Value of context from page
             method: Captcha type
 
         Examples:
             >>> AmazonWAF(rucaptcha_key="aa9011f31111181111168611f1151122",
-            ...           pageurl="https://page-with-waf.com/",
-            ...           sitekey="some-site-key",
+            ...           websiteURL="https://page-with-waf.com/",
+            ...           websiteKey="some-site-key",
             ...           iv="some-iv-value",
             ...           context="some-context-value").captcha_handler()
             {
-                'serverAnswer': {},
-                'captchaSolve': 'eyJ0e......jNuSFqtyP4Ho',
-                'taskId': '7111111984',
-                'error': False,
-                'errorBody': None
+               "errorId":0,
+               "status":"ready",
+               "solution":{
+                  "captcha_voucher":"eyJ0eXAiO...oQjTnJlBvAW4",
+                  "existing_token":"f8ab5749-f916-...5D8yAA39JtKVbw="
+               },
+               "cost":"0.00145",
+               "ip":"1.2.3.4",
+               "createTime":1692863536,
+               "endTime":1692863556,
+               "solveCount":0,
+               "taskId": 73243152973,
+            }
+
+            >>> AmazonWAF(rucaptcha_key="aa9011f31111181111168611f1151122",
+            ...           websiteURL="https://page-with-waf.com/",
+            ...           websiteKey="some-site-key",
+            ...           iv="some-iv-value",
+            ...           context="some-context-value").aio_captcha_handler()
+            {
+               "errorId":0,
+               "status":"ready",
+               "solution":{
+                  "captcha_voucher":"eyJ0eXAiO...oQjTnJlBvAW4",
+                  "existing_token":"f8ab5749-f916-...5D8yAA39JtKVbw="
+               },
+               "cost":"0.00145",
+               "ip":"1.2.3.4",
+               "createTime":1692863536,
+               "endTime":1692863556,
+               "solveCount":0,
+               "taskId": 73243152973,
             }
 
         Returns:
             Dict with full server response
 
         Notes:
-            https://rucaptcha.com/api-rucaptcha#amazon-waf
+            https://rucaptcha.com/api-docs/amazon-aws-waf-captcha
         """
-        super().__init__(rucaptcha_key=rucaptcha_key, method=method, *args, **kwargs)
-
-        self.post_payload.update({"sitekey": sitekey, "pageurl": pageurl, "iv": iv, "context": context})
+        super().__init__(method=method, *args, **kwargs)
 
         # check user params
         if method not in AmazonWAFCaptchaEnm.list_values():
             raise ValueError(f"Invalid method parameter set, available - {AmazonWAFCaptchaEnm.list_values()}")
+        # insert `gt` param to payload
+        self.create_task_payload["task"].update(
+            {
+                "websiteURL": websiteURL,
+                "websiteKey": websiteKey,
+                "iv": iv,
+                "context": context,
+            }
+        )
 
     def captcha_handler(self, **kwargs) -> dict:
         """
         Synchronous method for captcha solving
 
-        Examples:
-            >>> AmazonWAF(rucaptcha_key="aa9011f31111181111168611f1151122",
-            ...           pageurl="https://page-with-waf.com/",
-            ...           sitekey="some-site-key",
-            ...           iv="some-iv-value",
-            ...           context="some-context-value").captcha_handler()
-            {
-                'serverAnswer': {},
-                'captchaSolve': 'eyJ0e......jNuSFqtyP4Ho',
-                'taskId': '7111111984',
-                'error': False,
-                'errorBody': None
-            }
-
         Returns:
-            Response to captcha as JSON string with fields:
-                 captchaSolve - captcha solution,
-                 taskId - finds the ID of the task to solve the captcha,
-                 error - False - if everything is fine, True - if there is an error,
-                 errorBody - error name
+            Dict with full server response
 
         Notes:
             Check class docstirng for more info
@@ -88,26 +105,8 @@ class AmazonWAF(BaseCaptcha):
         """
         Asynchronous method for captcha solving
 
-        Examples:
-            >>> await AmazonWAF(rucaptcha_key="aa9011f31111181111168611f1151122",
-            ...           pageurl="https://page-with-waf.com/",
-            ...           sitekey="some-site-key",
-            ...           iv="some-iv-value",
-            ...           context="some-context-value").aio_captcha_handler()
-            {
-                'serverAnswer': {},
-                'captchaSolve': 'eyJ0e......jNuSFqtyP4Ho',
-                'taskId': '7111111984',
-                'error': False,
-                'errorBody': None
-            }
-
         Returns:
-            Response to captcha as JSON string with fields:
-                 captchaSolve - captcha solution,
-                 taskId - finds the ID of the task to solve the captcha,
-                 error - False - if everything is fine, True - if there is an error,
-                 errorBody - error name
+            Dict with full server response
 
         Notes:
             Check class docstirng for more info

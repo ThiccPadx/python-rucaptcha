@@ -1,53 +1,90 @@
-from python_rucaptcha.core.base import BaseCaptcha
+import logging
+
+from .core.base import BaseCaptcha
+from .core.enums import TextCaptchaEnm
 
 
-class BaseTextCaptcha(BaseCaptcha):
-    """
-    The class is used to work with Amazon WAF
-
-    Args:
-        rucaptcha_key: User API key
-        language: Captcha text lang:
-                    0 - not defined
-                    1 - captcha contains only Cyrillic
-                    2 - captcha contains only latin characters
-
-    Examples:
-        >>> TextCaptcha(rucaptcha_key="aa9011f31111181111168611f1151122",
-        ...             language=2).captcha_handler(textcaptcha="Our planet name?")
-        {
-            'serverAnswer': {},
-            'captchaSolve': 'earth',
-            'taskId': '7111111984',
-            'error': False,
-            'errorBody': None
-        }
-
-    Returns:
-        Dict with full server response
-
-    Notes:
-        https://rucaptcha.com/api-rucaptcha#amazon-waf
-    """
-
+class TextCaptcha(BaseCaptcha):
     def __init__(
         self,
-        rucaptcha_key: str,
-        language: int = 0,
+        languagePool: str = "en",
         *args,
         **kwargs,
     ):
-        super().__init__(rucaptcha_key=rucaptcha_key, *args, **kwargs)
+        """
+        The class is used to work with Text Captcha.
 
-        self.post_payload.update({"language": language})
+        Args:
+            rucaptcha_key: User API key
+            languagePool: Used to choose the workers for solving the captcha by their language.
+                            Applicable to image-based and text-based captchas.\n
+                            `en` - English-speaking workers\n
+                            `rn` - Russian-speaking workers.
+            kwargs: Additional not required params for this captcha type
 
+        Examples:
+            >>> TextCaptcha(rucaptcha_key="aa90...51122",
+            ...             languagePool='en'
+            ...             ).captcha_handler(textcaptcha="If tomorrow is Saturday, what day is today?")
+            {
+               "errorId":0,
+               "status":"ready",
+               "solution":{
+                  "text":"SUNDAY"
+               },
+               "cost":0.03669,
+               "ip":"46.53.241.91",
+               "createTime":1695617910,
+               "endTime":1695617965,
+               "solveCount":2,
+               "taskId":5423543
+            }
 
-class TextCaptcha(BaseTextCaptcha):
-    """
-    The class is used to work with TextCaptcha.
-    Solve description:
-        https://rucaptcha.com/api-rucaptcha#solving_text_captcha
-    """
+            >>> TextCaptcha(rucaptcha_key="aa90...51122",
+            ...             ).captcha_handler(textcaptcha="If tomorrow is Saturday, what day is today?")
+            {
+               "errorId":0,
+               "status":"ready",
+               "solution":{
+                  "text":"SUNDAY"
+               },
+               "cost":0.03669,
+               "ip":"46.53.241.91",
+               "createTime":1695617910,
+               "endTime":1695617965,
+               "solveCount":2,
+               "taskId":5423543
+            }
+
+            >>> await TextCaptcha(rucaptcha_key="aa90...51122",
+            ...             ).aio_captcha_handler(textcaptcha="If tomorrow is Saturday, what day is today?")
+            {
+               "errorId":0,
+               "status":"ready",
+               "solution":{
+                  "text":"SUNDAY"
+               },
+               "cost":0.03669,
+               "ip":"46.53.241.91",
+               "createTime":1695617910,
+               "endTime":1695617965,
+               "solveCount":2,
+               "taskId":5423543
+            }
+
+        Returns:
+            Dict with full server response
+
+        Notes:
+            https://2captcha.com/api-docs/text
+
+            https://rucaptcha.com/api-docs/text
+        """
+
+        super().__init__(method=TextCaptchaEnm.TextCaptchaTask.value, *args, **kwargs)
+
+        self.create_task_payload.update({"languagePool": languagePool})
+        logging.warning(f"{self.create_task_payload = }")
 
     def captcha_handler(self, textcaptcha: str, **kwargs) -> dict:
         """
@@ -56,29 +93,13 @@ class TextCaptcha(BaseTextCaptcha):
         Args:
             textcaptcha: Captcha text
 
-        Examples:
-            >>> TextCaptcha(rucaptcha_key="aa9011f31111181111168611f1151122",
-            ...             language=2).captcha_handler(textcaptcha="Our planet name?")
-            {
-                'serverAnswer': {},
-                'captchaSolve': 'eyJ0e......jNuSFqtyP4Ho',
-                'taskId': '7111111984',
-                'error': False,
-                'errorBody': None
-            }
-
         Returns:
-            Response to captcha as JSON string with fields:
-                 captchaSolve - captcha solution,
-                 taskId - finds the ID of the task to solve the captcha,
-                 error - False - if everything is fine, True - if there is an error,
-                 errorBody - error name
+            Dict with full server response
 
         Notes:
             Check class docstirng for more info
         """
-        self.post_payload.update({"textcaptcha": textcaptcha})
-
+        self.create_task_payload["task"].update({"comment": textcaptcha})
         return self._processing_response(**kwargs)
 
     async def aio_captcha_handler(self, textcaptcha: str) -> dict:
@@ -86,28 +107,13 @@ class TextCaptcha(BaseTextCaptcha):
         Asynchronous method for captcha solving
 
         Args:
-            :param textcaptcha: Captcha text
-
-        Examples:
-            >>> await TextCaptcha(rucaptcha_key="aa9011f31111181111168611f1151122",
-            ...             language=2).aio_captcha_handler(textcaptcha="Our planet name?")
-            {
-                'serverAnswer': {},
-                'captchaSolve': 'eyJ0e......jNuSFqtyP4Ho',
-                'taskId': '7111111984',
-                'error': False,
-                'errorBody': None
-            }
+            textcaptcha: Captcha text
 
         Returns:
-            Response to captcha as JSON string with fields:
-                 captchaSolve - captcha solution,
-                 taskId - finds the ID of the task to solve the captcha,
-                 error - False - if everything is fine, True - if there is an error,
-                 errorBody - error name
+            Dict with full server response
 
         Notes:
             Check class docstirng for more info
         """
-        self.post_payload.update({"textcaptcha": textcaptcha})
+        self.create_task_payload["task"].update({"comment": textcaptcha})
         return await self._aio_processing_response()

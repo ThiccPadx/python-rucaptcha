@@ -1,66 +1,220 @@
 # python-rucaptcha
 
-
-![](files/RuCaptcha.png)
-
 [![PyPI version](https://badge.fury.io/py/python-rucaptcha.svg)](https://badge.fury.io/py/python-rucaptcha)
 [![Python versions](https://img.shields.io/pypi/pyversions/python-rucaptcha.svg?logo=python&logoColor=FBE072)](https://badge.fury.io/py/python-rucaptcha)
-[![Downloads](https://pepy.tech/badge/python-rucaptcha/month)](https://pepy.tech/project/python-rucaptcha)
+[![Downloads](https://static.pepy.tech/badge/python-rucaptcha/month)](https://pepy.tech/project/python-rucaptcha)
+[![Documentation](https://img.shields.io/badge/docs-Sphinx-green)](https://andreidrang.github.io/python-rucaptcha/)
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/aec93bb04a277cf0dde9/maintainability)](https://codeclimate.com/github/AndreiDrang/python-rucaptcha/maintainability)
+**Python 3.9+ library to solve CAPTCHAs automatically using RuCaptcha, 2Captcha, DeathByCaptcha, or CaptchaAI services.**
 
-Python3 library for [RuCaptcha](https://rucaptcha.com/) and [2Captcha](https://2captcha.com/) service API.
+> **Using CaptchaAI:** compatible high-level classes can pass `service_type=ServiceEnm.CAPTCHAAI`.
+> CaptchaAI uses the classic multipart `in.php`/`res.php` endpoints.
+> ```python
+> from python_rucaptcha.turnstile import Turnstile
+> from python_rucaptcha.core.enums import ServiceEnm
+> result = Turnstile(
+>     rucaptcha_key="CAPTCHAAI_KEY",
+>     service_type=ServiceEnm.CAPTCHAAI,
+>     websiteURL="https://example.com",
+>     websiteKey="0x4AAAAAAA...",
+>     userAgent="Mozilla/5.0 ...",
+> ).captcha_handler()
+> ```
+>
+> Proxy task types require `proxyType`, `proxyAddress`, and `proxyPort`; credentials are optional:
+> ```python
+> from python_rucaptcha.re_captcha import ReCaptcha
+> from python_rucaptcha.core.enums import ReCaptchaEnm, ServiceEnm
+>
+> result = ReCaptcha(
+>     rucaptcha_key="CAPTCHAAI_KEY",
+>     service_type=ServiceEnm.CAPTCHAAI,
+>     websiteURL="https://example.com/login",
+>     websiteKey="SITE_KEY",
+>     method=ReCaptchaEnm.RecaptchaV2Task,
+>     proxyType="HTTPS",
+>     proxyAddress="203.0.113.7",
+>     proxyPort=3128,
+>     proxyLogin="user",
+>     proxyPassword="pass",
+> ).captcha_handler()
+> ```
+>
+> For every documented CaptchaAI method—or a provider method released after this package—use the native,
+> type-free client. `profile` validates a packaged documented contract; omit it to pass provider-native fields
+> through unchanged.
+> ```python
+> from python_rucaptcha.captchaai import CaptchaAI, CaptchaAIFile
+>
+> result = CaptchaAI(
+>     rucaptcha_key="CAPTCHAAI_KEY",
+>     profile="cloudflare-challenge",
+>     params={
+>         "pageurl": "https://example.com/protected",
+>         "proxy": "user:pass@203.0.113.7:3128",
+>         "proxytype": "HTTPS",
+>     },
+> ).captcha_handler()
+>
+> image = CaptchaAI(
+>     rucaptcha_key="CAPTCHAAI_KEY",
+>     profile="normal-solve-file",
+>     files={"file": CaptchaAIFile(b"... PNG bytes ...", "captcha.png", "image/png")},
+> ).captcha_handler()
+> ```
 
-Tested on UNIX based OS.
+## What is this?
 
-The library is intended for software developers and is used to work with the [RuCaptcha](https://rucaptcha.com/) and [2Captcha](https://2captcha.com/) service API.
+This library automates CAPTCHA solving by connecting to third-party services. When your code encounters a CAPTCHA, python-rucaptcha sends it to the service, waits for a human to solve it, and returns the solution to your application.
 
-***
+**Supports 30+ CAPTCHA types:**
+- reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile
+- Image captchas, Audio captchas
+- GeeTest, KeyCaptcha, Amazon WAF, Tencent
+- And many more...
 
-Application in [RuCaptcha software](https://rucaptcha.com/software/python-rucaptcha) and [2Captcha software](https://2captcha.com/software/python-rucaptcha).
+## Quick Start
 
-If you have any questions, please send a message to the [Telegram](https://t.me/pythoncaptcha) chat room.
-
-Or email python-captcha@pm.me
-
-***
-
-
-## How to install?
-
-### pip
+### 1. Install
 
 ```bash
 pip install python-rucaptcha
 ```
 
-### Source
-```bash
-git clone https://github.com/AndreiDrang/python-rucaptcha.git
-cd python-rucaptcha
-python setup.py install
+### 2. Get an API Key
+
+Sign up at [RuCaptcha](https://rucaptcha.com) or [2Captcha](https://2captcha.com), then copy your API key from the dashboard.
+
+### 3. Solve a CAPTCHA
+
+```python
+from python_rucaptcha import HCaptcha
+
+# Your API key
+key = "your_api_key_here"
+
+# Solve hCaptcha
+result = HCaptcha(aptcha_key=key).captcha_handler(site_url="https://example.com", site_key="abc123")
+
+if result['code'] == 0:
+    print(f"Solved! Token: {result['token']}")
+else:
+    print(f"Error: {result['message']}")
 ```
-### Changelog
 
-v.4.0 - Rework classes and methods. Adding `TikTok` captcha. Adding inheritance and serializers. The `Callback server` is deprecated.
+### Solving Different CAPTCHA Types
 
-v.4.2 - Added [Yandex Smart Captcha](https://rucaptcha.com/api-rucaptcha#yandex).
+**reCAPTCHA v2:**
+```python
+from python_rucaptcha import ReCaptcha
 
-***
+result = ReCaptcha(api_key).captcha_handler(
+    site_url="https://example.com",
+    site_key="your_site_key"
+)
+```
 
-## [All examples of working with the library](src/examples)
+**Image CAPTCHA:**
+```python
+from python_rucaptcha import ImageCaptcha
 
-***
+result = ImageCaptcha(api_key).captcha_handler(
+    image_link="https://example.com/captcha.jpg"
+)
+```
 
-To test various types of captcha, a [special site](https://pythoncaptcha.xyz/) is provided, which contains all available types of captcha, with a convenient system for testing your scripts.
+**ALTCHA:**
+```python
+from python_rucaptcha import AltchaCaptcha
+from python_rucaptcha.core.enums import AltchaEnm
 
-***
+result = AltchaCaptcha(
+    rucaptcha_key=api_key,
+    websiteURL="https://example.com",
+    challengeURL="https://example.com/altcha/challenge",
+    method=AltchaEnm.AltchaTaskProxyless,
+).captcha_handler()
+```
 
-### Errors description
+**Using async:**
+```python
+import asyncio
+from python_rucaptcha import HCaptcha
 
-1. https://rucaptcha.com/api-rucaptcha#in_errors
-2. https://rucaptcha.docs.apiary.io/#reference/2
+async def solve():
+    result = await HCaptcha(api_key).aio_captcha_handler(
+        site_url="https://example.com",
+        site_key="abc123"
+    )
+    return result
 
-### Get API Key to work with the library
-1. On the page - https://rucaptcha.com/enterpage
-2. Find it: ![img.png](files/img.png)
+token = asyncio.run(solve())
+```
+
+## Supported CAPTCHA Types
+
+| CAPTCHA | Module | Description |
+|---------|--------|-------------|
+| reCAPTCHA v2/v3 | `ReCaptcha` | Google reCAPTCHA |
+| hCaptcha | `HCaptcha` | hCaptcha challenge |
+| Cloudflare Turnstile | `Turnstile` | Cloudflare protection |
+| Image | `ImageCaptcha` | Type the text from image |
+| Audio | `AudioCaptcha` | Listen and type audio |
+| GeeTest | `GeeTest` | Chinese geetest puzzles |
+| KeyCaptcha | `KeyCaptcha` | KeyCAPTCHA service |
+| Amazon WAF | `AmazonWaf` | AWS WAF challenge |
+| ALTCHA | `AltchaCaptcha` | ALTCHA challenge |
+| TSPD | `TSPDCaptcha` | Cookie-based TSPD protection |
+| Basilisk | `BasiliskCaptcha` | Token-based Basilisk challenge |
+| Alibaba | `AlibabaCaptcha` | Token-based Alibaba challenge |
+| Imperva/Incapsula | `IncapsulaCaptcha` | Cookie-based Imperva protection |
+| Binance | `BinanceCaptcha` | Token-based Binance challenge |
+| Grid | `GridCaptcha` | Select grid cells |
+| Coordinates | `CoordinatesCaptcha` | Click on coordinates |
+| And 20+ more | ... | See [full docs](https://andreidrang.github.io/python-rucaptcha/) |
+
+## Switching Services
+
+Use the same code with different services:
+
+```python
+from python_rucaptcha import HCaptcha
+from python_rucaptcha.core.enums import ServiceEnm
+
+# Use 2Captcha (default)
+result = HCaptcha("2captcha_key").captcha_handler(...)
+
+# Use RuCaptcha
+result = HCaptcha("rucaptcha_key", service_type=ServiceEnm.RuCaptcha).captcha_handler(...)
+
+# Use DeathByCaptcha
+result = HCaptcha("dbc_user:dbc_pass", service_type=ServiceEnm.DeathByCaptcha).captcha_handler(...)
+```
+
+## Testing
+
+```bash
+# Set your API key
+export RUCAPTCHA_KEY="your_key_here"
+
+# Run tests
+make tests
+```
+
+## Documentation
+
+For advanced usage, configuration options, and all CAPTCHA types, see the [full documentation](https://andreidrang.github.io/python-rucaptcha/).
+
+## Support
+
+- **Telegram:** [pythoncaptcha](https://t.me/pythoncaptcha)
+- **Email:** python-captcha@pm.me
+- **Issues:** [GitHub Issues](https://github.com/AndreiDrang/python-rucaptcha/issues)
+
+## Changelog
+
+See [Releases](https://github.com/AndreiDrang/python-rucaptcha/releases) for full changelog.
+
+- **v6.0** - Refactored to use msgspec (faster), API v2, dropped Python 3.8
+- **v5.3** - Added DeathByCaptcha support
+- **v5.2** - Added audio CAPTCHA solving

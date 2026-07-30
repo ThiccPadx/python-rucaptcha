@@ -1,80 +1,35 @@
-from uuid import uuid4
-from typing import Union
+from typing import Any, Literal
+from decimal import Decimal
+from datetime import date, datetime
 
-from pydantic import Field, BaseModel, conint, constr, validator, root_validator
+from msgspec import Struct
 
 from . import enums
 from .config import APP_KEY
 
-"""
-Socket API Serializers
-"""
 
+class MyBaseModel(Struct):
+    def to_dict(self) -> dict[str, Any]:
+        result = {}
+        for field in self.__struct_fields__:
+            value = getattr(self, field)
 
-class CaptchaOptionsSocketSer(BaseModel):
-    phrase: bool = False
-    caseSensitive: bool = False
-    numeric: conint(ge=1, le=4) = 0
-    calc: bool = False
-    minLen: conint(ge=0, le=20) = 0
-    maxLen: conint(ge=0, le=20) = 0
-    lang: str = ""
-    hintText: constr(max_length=139) = ""
-    hintImg: str = ""
-    softId: str = "1899"
+            if isinstance(value, MyBaseModel):
+                result[field] = value.to_dict()
 
-    @validator("hintText")
-    def hint_text_check(cls, value):
-        if len(value) > 140:
-            raise ValueError("Invalid `hintText` param value")
-        return value
+            elif isinstance(value, (list, tuple)) and all(isinstance(el, Struct) for el in value):
+                result[field] = [el.to_dict() for el in value]
 
-    @validator("softId")
-    def soft_id_set(cls, value):
-        value.update({"softId": "1899"})
-        return value
+            elif isinstance(value, (date, datetime)):
+                result[field] = value.isoformat()
 
+            elif isinstance(value, Decimal):
+                result[field] = str(value)
 
-class NormalCaptchaSocketSer(BaseModel):
-    method: str = "normal"
-    requestId: str = Field(default_factory=lambda: str(uuid4()))
-    body: str = str()
-    options: "CaptchaOptionsSocketSer" = CaptchaOptionsSocketSer()
+            else:
+                result[field] = value
 
-
-class TextCaptchaSocketSer(BaseModel):
-    method: str = "text"
-    requestId: str = Field(default_factory=lambda: str(uuid4()))
-    body: str = str()
-    options: "CaptchaOptionsSocketSer" = CaptchaOptionsSocketSer()
-
-
-class ControlCaptchaSocketSer(BaseModel):
-    method: str
-    requestId: str = Field(default_factory=lambda: str(uuid4()))
-    success: str = None
-    captchaId: int = None
-
-
-class SocketResponse(BaseModel):
-    method: str = None
-    success: bool = None
-    code: str = None
-    # captcha task ID at RuCaptcha service
-    captchaId: int = None
-    # manually generated requestID
-    requestId: str = Field(default_factory=lambda: str(uuid4()))
-    error: str = None
-    # specific fields for balance request response
-    balance: float = None
-    valute: str = None
-
-
-class SockAuthSer(BaseModel):
-    method: str = "auth"
-    requestId: str = Field(default_factory=lambda: str(uuid4()))
-    key: str
-    options: dict
+        return result
 
 
 """
@@ -82,53 +37,47 @@ HTTP API Serializers
 """
 
 
-class PostRequestSer(BaseModel):
-    key: str
-    method: str
-    soft_id: str = Field(APP_KEY, const=True)
-    field_json: int = Field(1, alias="json")
+class TaskSer(MyBaseModel):
+    type: str
 
 
-class GetRequestSer(BaseModel):
-    key: str
-    action: str = "get"
-    field_json: int = Field(1, alias="json")
-
-    # Control keys
-    ids: str = None
-    id: str = None
+class CreateTaskBaseSer(MyBaseModel):
+    clientKey: str
+    task: TaskSer
+    languagePool: str = "en"
+    callbackUrl: str | None = None
+    soft_id: Literal[APP_KEY] = APP_KEY
 
 
-class CaptchaOptionsSer(BaseModel):
-    rucaptcha_key: constr(min_length=32, max_length=32)
-    method: str
-    action: str
-    sleep_time: conint(gt=5) = 10
-    service_type: str = enums.ServicesEnm.TWOCAPTCHA.value
+class GetTaskResultRequestSer(MyBaseModel):
+    clientKey: str
+    taskId: int | None = None
 
-    # CaptchaImage
-    # save_format: str = enums.SaveFormatsEnm.TEMP.value
-    # img_clearing: bool = True
-    # img_path: str = "PythonRuCaptchaImages"
 
-    url_request: str = ""
-    url_response: str = ""
+class CaptchaOptionsSer(MyBaseModel):
+    sleep_time: int = 10
+    service_type: enums.ServiceEnm | str = enums.ServiceEnm.TWOCAPTCHA
 
-    @validator("service_type")
-    def service_type_check(cls, value):
-        if value not in enums.ServicesEnm.list_values():
-            raise ValueError(
-                f"Invalid `service_type`, valid params - {','.join(enums.ServicesEnm.list_values())}, send - {value}"
-            )
-        return value
+    url_request: str = f"http://api.{enums.ServiceEnm.TWOCAPTCHA.value}.com/2captcha/in.php"
+    url_response: str = f"http://api.{enums.ServiceEnm.TWOCAPTCHA.value}.com/2captcha/res.php"
 
-    @root_validator
-    def urls_set(cls, values):
-        service_type = values.get("service_type")
-        values.update(
-            {"url_request": f"http://{service_type}.com/in.php", "url_response": f"http://{service_type}.com/res.php"}
-        )
-        return values
+    def urls_set(self):
+        """
+        Set request/response URLs if they not set previously
+        """
+        if isinstance(self.service_type, enums.ServiceEnm):
+            self.service_type = self.service_type.value
+
+        if self.service_type == enums.ServiceEnm.CAPTCHAAI:
+            # CaptchaAI exposes the classic 2captcha in.php/res.php API.
+            self.url_request = "https://ocr.captchaai.com/in.php"
+            self.url_response = "https://ocr.captchaai.com/res.php"
+        elif self.service_type == enums.ServiceEnm.DEATHBYCAPTCHA:
+            self.url_request = f"http://api.{self.service_type}.com/2captcha/in.php"
+            self.url_response = f"http://api.{self.service_type}.com/2captcha/res.php"
+        else:
+            self.url_request = f"https://api.{self.service_type}.com/createTask"
+            self.url_response = f"https://api.{self.service_type}.com/getTaskResult"
 
 
 """
@@ -136,29 +85,18 @@ HTTP API Response
 """
 
 
-class ServicePostResponseSer(BaseModel):
-    status: int
-    request: str
-
-
-class ServiceGetResponseSer(BaseModel):
-    status: int
-    request: Union[str, dict]
-
-    # ReCaptcha V3 params
-    user_check: str = ""
-    user_score: str = ""
-
-
-class ResponseSer(BaseModel):
-    serverAnswer: dict = {}
-    captchaSolve: dict = {}
-    taskId: int = None
-    error: bool = False
-    errorBody: str = None
-
-    @validator("taskId", pre=True, always=True)
-    def dt_check(cls, value):
-        if value:
-            value = int(value)
-        return value
+class GetTaskResultResponseSer(MyBaseModel):
+    status: str = "ready"
+    solution: dict[str, Any] | None = None
+    cost: float = 0.0
+    ip: str | None = None
+    createTime: int | None = None
+    endTime: int | None = None
+    solveCount: int | None = None
+    taskId: int | str | None = None
+    # control method params
+    balance: float | None = None
+    # error info
+    errorId: int = 0
+    errorCode: str | None = None
+    errorDescription: str | None = None

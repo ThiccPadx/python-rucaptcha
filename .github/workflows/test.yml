@@ -1,0 +1,61 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "master", "release"]
+    paths:
+      - '.github/workflows/test.yml'
+      - 'src/**'
+      - 'tests/**'
+      - 'Makefile'
+      - 'requirements.test.txt'
+  pull_request:
+    branches: [ "master", "release"]
+    paths:
+      - '.github/workflows/test.yml'
+      - 'src/**'
+      - 'tests/**'
+      - 'Makefile'
+      - 'requirements.test.txt'
+  schedule:
+    - cron: "5 0 * * 1"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUCAPTCHA_KEY: ${{ secrets.RUCAPTCHA_KEY }}
+      DEATHBYCAPTCHA_KEY: ${{ secrets.DEATHBYCAPTCHA_KEY }}
+      CC_TEST_REPORTER_ID: ${{ secrets.CODE_CLIMATE_COVERAGE_ID }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.test.txt
+
+      - name: Test
+        run: make tests
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{github.workspace}}/coverage/coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: Upload coverage to Code Climate
+        uses: paambaati/codeclimate-action@v9.0.0
+        with:
+          coverageLocations: ${{github.workspace}}/coverage/coverage.xml:coverage.py

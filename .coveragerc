@@ -1,16 +1,16 @@
 [run]
 omit =
         *__init__*
-        */src/tests/*
+        */tests/*
 
 include =
-        */src/python_rucaptcha/*
+        */python_rucaptcha/*
 
 
 [report]
 omit =
         *__init__*
-        */src/tests/*
+        */tests/*
 
 include =
-        */src/python_rucaptcha/*
+        */python_rucaptcha/*

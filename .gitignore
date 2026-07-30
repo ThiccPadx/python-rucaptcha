@@ -18,3 +18,9 @@ dist/
 
 env/
 /.coverage
+/src/coverage/
+/src/.coverage
+/src/coverage/lcov.info
+/docs/_build/
+/coverage/
+.osgrep

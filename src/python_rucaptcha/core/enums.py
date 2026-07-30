@@ -3,6 +3,10 @@ from typing import List
 
 
 class MyEnum(Enum):
+    """
+    Base class for work with updated Enums
+    """
+
     @classmethod
     def list(cls) -> List[Enum]:
         return list(map(lambda c: c, cls))
@@ -16,81 +20,200 @@ class MyEnum(Enum):
         return list(map(lambda c: c.name, cls))
 
 
-class ServicesEnm(MyEnum):
+class ServiceEnm(str, MyEnum):
     TWOCAPTCHA = "2captcha"
     RUCAPTCHA = "rucaptcha"
+    DEATHBYCAPTCHA = "deathbycaptcha"
+    CAPTCHAAI = "captchaai"
 
 
-class SaveFormatsEnm(MyEnum):
+class SaveFormatsEnm(str, MyEnum):
     TEMP = "temp"
     CONST = "const"
 
 
-class GeetestEnm(MyEnum):
-    GEETEST = "geetest"
-    GEETEST_V4 = "geetest_v4"
+class GeetestEnm(str, MyEnum):
+    GeeTestTask = "GeeTestTask"
+    GeeTestTaskProxyless = "GeeTestTaskProxyless"
 
 
-class ImageCaptchaEnm(MyEnum):
-    BASE64 = "base64"
+class ImageCaptchaEnm(str, MyEnum):
+    ImageToTextTask = "ImageToTextTask"
 
 
-class CapyPuzzleEnm(MyEnum):
-    CAPY = "capy"
+class CapyPuzzleEnm(str, MyEnum):
+    CapyTask = "CapyTask"
+    CapyTaskProxyless = "CapyTaskProxyless"
 
 
-class FunCaptchaEnm(MyEnum):
-    FUNCAPTCHA = "funcaptcha"
+class FunCaptchaEnm(str, MyEnum):
+    FunCaptchaTaskProxyless = "FunCaptchaTaskProxyless"
+    FunCaptchaTask = "FunCaptchaTask"
 
 
-class ReCaptchaEnm(MyEnum):
-    USER_RECAPTCHA = "userrecaptcha"
+class ReCaptchaEnm(str, MyEnum):
+    RecaptchaV2TaskProxyless = "RecaptchaV2TaskProxyless"
+    RecaptchaV2Task = "RecaptchaV2Task"
+
+    RecaptchaV2EnterpriseTaskProxyless = "RecaptchaV2EnterpriseTaskProxyless"
+    RecaptchaV2EnterpriseTask = "RecaptchaV2EnterpriseTask"
+
+    RecaptchaV3TaskProxyless = "RecaptchaV3TaskProxyless"
+    RecaptchaV3EnterpriseTaskProxyless = "RecaptchaV3EnterpriseTaskProxyless"
 
 
-class LeminCroppedCaptchaEnm(MyEnum):
-    LEMIN = "lemin"
+class LeminCaptchaEnm(str, MyEnum):
+    LeminTaskProxyless = "LeminTaskProxyless"
+    LeminTask = "LeminTask"
 
 
-class HCaptchaEnm(MyEnum):
-    HCAPTCHA = "hcaptcha"
+class HCaptchaEnm(str, MyEnum):
+    HCaptchaTask = "HCaptchaTask"
+    HCaptchaTaskProxyless = "HCaptchaTaskProxyless"
 
 
-class KeyCaptchaEnm(MyEnum):
-    KEYCAPTCHA = "keycaptcha"
+class KeyCaptchaEnm(str, MyEnum):
+    KeyCaptchaTask = "KeyCaptchaTask"
+    KeyCaptchaTaskProxyless = "KeyCaptchaTaskProxyless"
 
 
-class RotateCaptchaEnm(MyEnum):
-    ROTATECAPTCHA = "rotatecaptcha"
+class RotateCaptchaEnm(str, MyEnum):
+    RotateTask = "RotateTask"
 
 
-class TikTokCaptchaEnm(MyEnum):
+class TikTokCaptchaEnm(str, MyEnum):
     TIKTOK = "tiktok"
 
 
-class CaptchaControlEnm(MyEnum):
-    # default
-    GET = "get"
-    # https://rucaptcha.com/api-rucaptcha#manage_pingback
-    ADD_PINGBACK = "add_pingback"
-    GET_PINGBACK = "get_pingback"
-    DEL_PINGBACK = "del_pingback"
-
-    # https://rucaptcha.com/api-rucaptcha#additional
-    GETBALANCE = "getbalance"
-    GET2 = "get2"
-
-    # https://rucaptcha.com/api-rucaptcha#complain
-    REPORTGOOD = "reportgood"
-    REPORTBAD = "reportbad"
+class ControlEnm(str, MyEnum):
+    control = "control"
+    # https://rucaptcha.com/api-docs/get-balance
+    getBalance = "getBalance"
+    # https://rucaptcha.com/api-docs/report-correct
+    reportCorrect = "reportCorrect"
+    # https://rucaptcha.com/api-docs/report-incorrect
+    reportIncorrect = "reportIncorrect"
 
 
-class YandexSmartCaptchaEnm(MyEnum):
-    YANDEX = "yandex"
+class TurnstileCaptchaEnm(str, MyEnum):
+    TurnstileTaskProxyless = "TurnstileTaskProxyless"
+    TurnstileTask = "TurnstileTask"
 
 
-class TurnstileCaptchaEnm(MyEnum):
-    TURNSTILE = "turnstile"
+class AltchaEnm(str, MyEnum):
+    AltchaTaskProxyless = "AltchaTaskProxyless"
+    AltchaTask = "AltchaTask"
 
 
-class AmazonWAFCaptchaEnm(MyEnum):
-    AMAZON_WAF = "amazon_waf"
+class AmazonWAFCaptchaEnm(str, MyEnum):
+    AmazonTask = "AmazonTask"
+    AmazonTaskProxyless = "AmazonTaskProxyless"
+
+
+class TextCaptchaEnm(str, MyEnum):
+    TextCaptchaTask = "TextCaptchaTask"
+
+
+class AudioCaptchaEnm(str, MyEnum):
+    AudioTask = "AudioTask"
+
+
+class CutCaptchaEnm(str, MyEnum):
+    CutCaptchaTask = "CutCaptchaTask"
+    CutCaptchaTaskProxyless = "CutCaptchaTaskProxyless"
+
+
+class DataDomeSliderEnm(str, MyEnum):
+    DataDomeSliderTask = "DataDomeSliderTask"
+
+
+class CyberSiARAEnm(str, MyEnum):
+    AntiCyberSiAraTask = "AntiCyberSiAraTask"
+    AntiCyberSiAraTaskProxyless = "AntiCyberSiAraTaskProxyless"
+
+
+class MTCaptchaEnm(str, MyEnum):
+    MtCaptchaTask = "MtCaptchaTask"
+    MtCaptchaTaskProxyless = "MtCaptchaTaskProxyless"
+
+
+class BoundingBoxCaptchaEnm(str, MyEnum):
+    BoundingBoxTask = "BoundingBoxTask"
+
+
+class DrawAroundCaptchaEnm(str, MyEnum):
+    DrawAroundTask = "DrawAroundTask"
+
+
+class CoordinatesCaptchaEnm(str, MyEnum):
+    CoordinatesTask = "CoordinatesTask"
+
+
+class GridCaptchaEnm(str, MyEnum):
+    GridTask = "GridTask"
+
+
+class FriendlyCaptchaEnm(str, MyEnum):
+    FriendlyCaptchaTaskProxyless = "FriendlyCaptchaTaskProxyless"
+    FriendlyCaptchaTask = "FriendlyCaptchaTask"
+
+
+class TencentEnm(str, MyEnum):
+    TencentTask = "TencentTask"
+    TencentTaskProxyless = "TencentTaskProxyless"
+
+
+class atbCaptchaEnm(str, MyEnum):
+    AtbCaptchaTask = "AtbCaptchaTask"
+    AtbCaptchaTaskProxyless = "AtbCaptchaTaskProxyless"
+
+
+class ProsopoEnm(str, MyEnum):
+    ProsopoTask = "ProsopoTask"
+    ProsopoTaskProxyless = "ProsopoTaskProxyless "
+
+
+class CaptchaFoxEnm(str, MyEnum):
+    CaptchaFoxTask = "CaptchaFoxTask"
+
+
+class VKCaptchaEnm(str, MyEnum):
+    VKCaptchaTask = "VKCaptchaTask"
+    VKCaptchaImageTask = "VKCaptchaImageTask"
+
+
+class TemuCaptchaEnm(str, MyEnum):
+    TemuCaptchaTask = "TemuCaptchaTask"
+
+
+class BinanceCaptchaEnm(str, MyEnum):
+    BinanceTaskProxyless = "BinanceTaskProxyless"
+    BinanceTask = "BinanceTask"
+
+
+class TSPDEnm(str, MyEnum):
+    TspdTask = "tspdtask"
+
+
+class BasiliskEnm(str, MyEnum):
+    BasiliskTaskProxyless = "BasiliskTaskProxyless"
+    BasiliskTask = "BasiliskTask"
+
+
+class AlibabaEnm(str, MyEnum):
+    AlibabaTaskProxyless = "AlibabaTaskProxyless"
+    AlibabaTask = "AlibabaTask"
+
+
+class IncapsulaEnm(str, MyEnum):
+    IncapsulaTask = "IncapsulaTask"
+
+
+class YidunEnm(str, MyEnum):
+    YidunTaskProxyless = "YidunTaskProxyless"
+    YidunTask = "YidunTask"
+
+
+class YandexSmartCaptchaEnm(str, MyEnum):
+    YandexSmartCaptchaTaskProxyless = "YandexSmartCaptchaTaskProxyless"
+    YandexSmartCaptchaTask = "YandexSmartCaptchaTask"
